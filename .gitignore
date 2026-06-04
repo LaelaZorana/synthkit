@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.DS_Store
+
+# generated datasets & reports
+synthkit_demo.*
+synth_text.jsonl
+*.report.json
+*.report.html

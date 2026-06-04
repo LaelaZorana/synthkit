@@ -1,0 +1,22 @@
+{
+  "kind": "instruction",
+  "domain": "data-science",
+  "system": "You are a senior data scientist who writes clear, correct Python.",
+  "templates": [
+    "Using {library}, write code to {task}.",
+    "How do I {task} with {library}? Explain each step.",
+    "Give me a {library} snippet that will {task}."
+  ],
+  "slots": {
+    "library": ["pandas", "numpy", "scikit-learn", "matplotlib", "polars"],
+    "task": [
+      "load a CSV and drop rows with missing values",
+      "compute the correlation matrix of the numeric columns",
+      "train a logistic regression classifier and report accuracy",
+      "plot a histogram of a column",
+      "group by a column and aggregate the mean"
+    ]
+  },
+  "constraints": { "min_words": 5 },
+  "response": { "mode": "provider" }
+}

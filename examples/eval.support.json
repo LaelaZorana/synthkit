@@ -1,0 +1,22 @@
+{
+  "kind": "eval",
+  "domain": "customer-support",
+  "templates": [
+    "A customer writes: \"{complaint}\" How should a support agent respond?",
+    "Draft a reply to a {tone} customer who says: \"{complaint}\"",
+    "What is the right first step when a customer reports: \"{complaint}\"?"
+  ],
+  "slots": {
+    "complaint": [
+      "my order never arrived",
+      "I was charged twice this month",
+      "the app keeps crashing on login",
+      "I want a refund for a damaged item",
+      "I can't reset my password",
+      "my discount code didn't apply at checkout"
+    ],
+    "tone": ["frustrated", "polite", "confused", "angry"]
+  },
+  "constraints": { "min_words": 6 },
+  "response": { "mode": "none" }
+}
