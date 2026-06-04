@@ -5,15 +5,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)
 
-**Generate synthetic data — and grade it before you train on it.**
+**Generate synthetic data, and grade it before you train on it.**
 
-> **Live demo** — try the grader in your browser: **[huggingface.co/spaces/LaelaZ/synthkit](https://huggingface.co/spaces/LaelaZ/synthkit)**
+> **Live demo:** try the grader in your browser at **[huggingface.co/spaces/LaelaZ/synthkit](https://huggingface.co/spaces/LaelaZ/synthkit)**
 
 Anyone can generate synthetic data. The hard part is knowing whether it's any
-good: Is it full of near-duplicates? Is it diverse enough to teach anything? Is
-it secretly leaking your eval set into your training set? `synthkit` generates
-data *and* grades it on those axes, with a single A+→F headline and a per-axis
-breakdown.
+good, because the dataset that looks fine can be full of near-duplicates, too
+flat to teach anything, or secretly leaking your eval set into your training
+set. `synthkit` generates data *and* grades it on those axes, with a single
+A+→F headline and a per-axis breakdown.
 
 ```
 $ synthkit text gen --demo
@@ -35,18 +35,18 @@ $ synthkit text gen --demo
 ```
 
 The demo draws its eval set from **held-out tasks** and deliberately leaks 5 records into
-training, so contamination flags exactly those 5. (The low `distinct-2` is expected —
-corpus-level distinct-n shrinks with dataset size — which is why the diversity score leans
+training, so contamination flags exactly those 5. (The low `distinct-2` is expected, because
+corpus-level distinct-n shrinks with dataset size, which is why the diversity score leans
 on pairwise self-similarity instead.) These numbers reproduce from a clean checkout.
 
-Zero dependencies for the core — it runs on the Python standard library alone.
+The core carries zero dependencies, so it runs on the Python standard library alone.
 
 ---
 
 ## One core, three products
 
-**Product A (`text`) is the complete, shipping tool** described in this README. It's
-built on a core — the grading engine, providers, and report writer — that is generic
+**Product A (`text`) is the complete, working tool** described in this README. It's
+built on a core (the grading engine, providers, and report writer) that is generic
 over "a list of records," so B and C are a deliberate, near-term extension of the same
 seam rather than separate rewrites. They are **roadmap, not yet implemented** (the CLI
 subcommands say so).
@@ -93,19 +93,19 @@ synthkit text gen --seed examples/instruction.datascience.json \
 ```
 
 **Output formats** (`--format`): `raw` (default), `alpaca` (`instruction/input/output`),
-`sharegpt` (`conversations`), `openai` (`messages`) — pick whatever your trainer expects.
+`sharegpt` (`conversations`), `openai` (`messages`), so pick whatever your trainer expects.
 
 **Clean by construction** (`--dedup-semantic`): embed each candidate as it's generated
 and reject it if it's within `--dedup-threshold` cosine of a record you've already kept,
-so the output has no meaning-duplicates. It also tells you the truth about your seed — one
-that emits 36 lexically-unique prompts but only ~6 distinct *meanings* yields 6 and says so,
+so the output has no meaning-duplicates. It also tells you the truth about your seed, because
+a seed that emits 36 lexically-unique prompts but only ~6 distinct *meanings* yields 6 and says so,
 instead of padding the file with redundancy.
 
 Response providers (only needed for instruction→output pairs):
 
 | `--provider` | Cost | Needs |
 |---|---|---|
-| `none` (default) | free | nothing — prompt-only eval sets |
+| `none` (default) | free | nothing (prompt-only eval sets) |
 | `ollama` | free, local | a running Ollama daemon |
 | `anthropic` | paid | `pip install anthropic`, `ANTHROPIC_API_KEY` |
 | `openai` | paid | `pip install openai`, `OPENAI_API_KEY` |
@@ -122,12 +122,12 @@ Response providers (only needed for instruction→output pairs):
 
 `--semantic` is the upgrade that earns its keep: a dataset can be **100% lexically
 unique yet full of meaning-duplicates** (e.g. an LLM answering five different prompts
-the same way). It embeds each record — local `nomic-embed-text` via Ollama by default,
-free — and flags cosine near-duplicates the MinHash pass can't see.
+the same way). It embeds each record (local `nomic-embed-text` via Ollama by default,
+free) and flags the cosine near-duplicates that the MinHash pass can't see.
 
 The headline grade is a weighted blend of whichever axes apply (contamination
 only counts with `--against`; semantic only with `--semantic`). Raw numbers for
-every axis are in the JSON report — the letter is a convenience, not a claim of
+every axis are in the JSON report, so treat the letter as a convenience, not a claim of
 ground truth.
 
 ```bash
@@ -142,14 +142,14 @@ synthkit grade train.jsonl --min-grade B
 
 Every run prints the terminal report and can also write:
 
-- `--report-json` / `--json` — machine-readable, every raw metric
-- `--html` — a standalone, shareable report
+- `--report-json` / `--json`: machine-readable, every raw metric
+- `--html`: a standalone, shareable report
 
 ## Roadmap
 
-- **B · tabular** — point at a DB schema or sample rows, get realistic fixtures
+- **B · tabular:** point at a DB schema or sample rows, get realistic fixtures
   with foreign-key integrity; adds referential-integrity + PII-safety axes.
-- **C · privacy** — fit a generator to a real dataset, emit a statistically
+- **C · privacy:** fit a generator to a real dataset, emit a statistically
   similar twin; adds distribution-fidelity + membership-inference-distance axes.
 
 Both reuse the Product A core unchanged.
