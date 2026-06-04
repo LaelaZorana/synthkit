@@ -1,6 +1,12 @@
 # synthkit
 
+[![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Space-live%20demo-yellow)](https://huggingface.co/spaces/LaelaZ/synthkit)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)
+
 **Generate synthetic data — and grade it before you train on it.**
+
+> **Live demo** — try the grader in your browser: **[huggingface.co/spaces/LaelaZ/synthkit](https://huggingface.co/spaces/LaelaZ/synthkit)**
 
 Anyone can generate synthetic data. The hard part is knowing whether it's any
 good: Is it full of near-duplicates? Is it diverse enough to teach anything? Is
