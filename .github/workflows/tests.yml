@@ -1,0 +1,31 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    name: tests (py${{ matrix.python-version }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      # The core is zero-dependency, so the tests run on the standard library alone.
+      - name: Run test suite
+        run: |
+          python tests/test_grading.py
+          python tests/test_generate.py
+          python tests/test_formats.py
+      - name: Smoke-test the CLI
+        run: |
+          python main.py --version
+          python main.py text gen --demo --no-color

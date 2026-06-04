@@ -1,5 +1,6 @@
 # synthkit
 
+[![tests](https://github.com/LaelaZorana/synthkit/actions/workflows/tests.yml/badge.svg)](https://github.com/LaelaZorana/synthkit/actions/workflows/tests.yml)
 [![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97%20Space-live%20demo-yellow)](https://huggingface.co/spaces/LaelaZ/synthkit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)
