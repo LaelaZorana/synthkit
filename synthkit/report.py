@@ -147,7 +147,7 @@ def to_html(report: GradeReport, dataset: str = "") -> str:
   ul.notes b {{ color: #818cf8; }}
   .foot {{ margin-top: 36px; color: #64748b; font-size: 12px; }}
 </style></head><body><div class="wrap">
-  <h1>synthkit — synthetic data quality report</h1>
+  <h1>synthkit: synthetic data quality report</h1>
   <p class="sub">validity · uniqueness · diversity · contamination</p>
   <div class="hero">
     <div class="grade">{report.grade}</div>

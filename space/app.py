@@ -85,7 +85,7 @@ def generate_ui(seed_choice, seed_text, n):
 with gr.Blocks(title="synthkit", theme=gr.themes.Soft(), css="footer{visibility:hidden}") as demo:
     gr.Markdown(
         "# 🧪 synthkit\n"
-        "**Generate synthetic data — and grade it before you train on it.** "
+        "**Generate synthetic data, and grade it before you train on it.** "
         "Scored on validity · uniqueness · diversity · contamination, with an A+→F headline.\n\n"
         f"This Space runs offline (template generation + lexical grading). The full "
         f"[CLI]({GH}) adds LLM-backed instruction data, fine-tuning formats "

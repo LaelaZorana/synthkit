@@ -33,7 +33,7 @@ def _maybe_embedder(args):
 # ---- text gen ----------------------------------------------------------------
 
 def _run_demo(args) -> int:
-    print("synthkit demo — generating a coding eval set, then grading it…",
+    print("synthkit demo: generating a coding eval set, then grading it…",
           file=sys.stderr)
     # Train and eval are drawn from DISJOINT tasks (a genuine held-out split), then a
     # known handful of eval records are deliberately leaked into train — so the
@@ -74,7 +74,7 @@ def cmd_text_gen(args) -> int:
     show = _progress if (busy and not args.no_progress) else None
     gstats: dict = {}
 
-    print(f"synthkit — generating {args.num} records from {args.seed}…", file=sys.stderr)
+    print(f"synthkit: generating {args.num} records from {args.seed}…", file=sys.stderr)
     data = generate(spec, args.num, provider=provider, seed=args.seed_int,
                     dedup=not args.no_dedup, concurrency=args.concurrency, progress=show,
                     dedup_embedder=dedup_embedder, dedup_threshold=args.dedup_threshold,
@@ -87,7 +87,7 @@ def cmd_text_gen(args) -> int:
         reason = ("raise --dedup-threshold or add slot variety" if args.dedup_semantic
                   else "the seed's template×slot space is exhausted "
                        "(add slot variety or pass --no-dedup)")
-        print(f"  note: produced {len(data)} of {args.num} requested — {reason}.",
+        print(f"  note: produced {len(data)} of {args.num} requested, {reason}.",
               file=sys.stderr)
 
     out = args.out or "synth_text.jsonl"
@@ -135,7 +135,7 @@ def cmd_grade(args) -> int:
 # ---- list / roadmap ----------------------------------------------------------
 
 def cmd_list(args) -> int:
-    print("\nsynthkit — products\n")
+    print("\nsynthkit products\n")
     print("  text      (A) live     LLM instruction & eval datasets + quality grading")
     print("  tabular   (B) roadmap  schema-aware fixtures with referential integrity")
     print("  privacy   (C) roadmap  privacy-safe synthetic twins of real datasets")
@@ -149,7 +149,7 @@ def cmd_list(args) -> int:
 
 
 def cmd_coming_soon(args) -> int:
-    print(f"\n  synthkit {args.product} — {args.blurb}")
+    print(f"\n  synthkit {args.product}: {args.blurb}")
     print("  On the roadmap. Product A (`synthkit text`) is live today and B/C share")
     print("  the same core: providers, the grading engine, and the report writer.\n")
     return 0
@@ -166,7 +166,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd")
 
     # text (Product A) with its own subcommands
-    text_p = sub.add_parser("text", help="Product A — LLM instruction & eval datasets")
+    text_p = sub.add_parser("text", help="Product A: LLM instruction & eval datasets")
     text_sub = text_p.add_subparsers(dest="text_cmd")
     gen = text_sub.add_parser("gen", help="generate a text dataset and grade it")
     gen.add_argument("--demo", action="store_true",
@@ -231,10 +231,10 @@ def build_parser() -> argparse.ArgumentParser:
     ls.set_defaults(func=cmd_list)
 
     # roadmap stubs
-    tb = sub.add_parser("tabular", help="Product B — schema-aware fixtures [roadmap]")
+    tb = sub.add_parser("tabular", help="Product B: schema-aware fixtures [roadmap]")
     tb.set_defaults(func=cmd_coming_soon, product="tabular",
                     blurb="schema-aware fixtures with referential integrity")
-    pv = sub.add_parser("privacy", help="Product C — privacy-safe twins [roadmap]")
+    pv = sub.add_parser("privacy", help="Product C: privacy-safe twins [roadmap]")
     pv.set_defaults(func=cmd_coming_soon, product="privacy",
                     blurb="privacy-safe synthetic twins of real datasets")
 
