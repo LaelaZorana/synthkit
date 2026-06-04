@@ -1,4 +1,4 @@
-"""Tests for report rendering — and that untrusted record text is HTML-escaped."""
+"""Tests for report rendering, and that untrusted record text is HTML-escaped."""
 from __future__ import annotations
 
 import json

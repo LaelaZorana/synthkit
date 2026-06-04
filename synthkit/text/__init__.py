@@ -1,1 +1,1 @@
-"""Product A — synthetic instruction & evaluation datasets for LLMs."""
+"""Product A: synthetic instruction & evaluation datasets for LLMs."""

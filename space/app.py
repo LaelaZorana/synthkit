@@ -1,4 +1,4 @@
-"""synthkit — Hugging Face Space (Gradio).
+"""synthkit: Hugging Face Space (Gradio).
 
 A small live demo of the synthkit quality grader and offline generator. This
 Space runs fully offline: template-based generation (no API key) and the lexical

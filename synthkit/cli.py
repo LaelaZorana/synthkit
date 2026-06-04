@@ -36,7 +36,7 @@ def _run_demo(args) -> int:
     print("synthkit demo: generating a coding eval set, then grading it…",
           file=sys.stderr)
     # Train and eval are drawn from DISJOINT tasks (a genuine held-out split), then a
-    # known handful of eval records are deliberately leaked into train — so the
+    # known handful of eval records are deliberately leaked into train, so the
     # contamination axis reflects real leakage, not one generator overlapping itself.
     tasks = DEMO_EVAL["slots"]["task"]
     train_spec = {**DEMO_EVAL, "slots": {**DEMO_EVAL["slots"], "task": tasks[:7]}}

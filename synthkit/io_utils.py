@@ -1,4 +1,4 @@
-"""Read and write datasets as JSONL, JSON, or CSV — standard library only."""
+"""Read and write datasets as JSONL, JSON, or CSV, standard library only."""
 from __future__ import annotations
 
 import csv
@@ -56,7 +56,7 @@ def load_spec(path: str) -> Dict[str, Any]:
                 import yaml  # optional dependency
             except ImportError as exc:  # pragma: no cover
                 raise SynthkitError(
-                    "reading YAML seeds needs pyyaml — "
+                    "reading YAML seeds needs pyyaml. "
                     "`pip install pyyaml`, or use a .json seed."
                 ) from exc
             return yaml.safe_load(fh)

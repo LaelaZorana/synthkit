@@ -1,12 +1,12 @@
 """Generate text records (eval prompts or instruction→output pairs) from a seed spec.
 
 Two phases:
-  1. sample prompts — deterministic for a fixed seed; exact-duplicate prompts are
+  1. sample prompts: deterministic for a fixed seed; exact-duplicate prompts are
      skipped by default so naive slot collisions don't pad the dataset.
-  2. fill responses — only for instruction data with response.mode == 'provider';
+  2. fill responses: only for instruction data with response.mode == 'provider';
      runs concurrently with a progress callback.
 
-Optional: pass a `dedup_embedder` to dedup *by meaning as you generate* — each
+Optional: pass a `dedup_embedder` to dedup *by meaning as you generate*, each
 candidate is embedded and rejected if it's within `dedup_threshold` cosine of an
 already-accepted record.
 
@@ -77,7 +77,7 @@ def sample_prompts(spec: Dict[str, Any], n: int, *, seed: int = 17,
                    dedup: bool = True,
                    max_attempts: Optional[int] = None
                    ) -> List[Tuple[str, Dict[str, str]]]:
-    """Phase 1 — return up to n (prompt, slot-fill) pairs."""
+    """Phase 1: return up to n (prompt, slot-fill) pairs."""
     templates = spec.get("templates") or []
     if not templates:
         raise SynthkitError("seed spec has no 'templates'")

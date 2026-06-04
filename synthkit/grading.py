@@ -1,4 +1,4 @@
-"""The grading engine — the part every synthkit product shares.
+"""The grading engine, the part every synthkit product shares.
 
 Given a list of records, score the dataset on four axes:
 
@@ -106,7 +106,7 @@ class _LSHIndex:
     """MinHash + LSH index over a list of shingle sets.
 
     Build once, then `candidates(shingles)` returns the (small) set of indices that
-    share at least one band with the query — turning all-pairs similarity work into
+    share at least one band with the query, turning all-pairs similarity work into
     near-linear candidate lookups. Used for both near-dup detection and the
     contamination check so neither is quadratic in the dataset size.
     """
@@ -263,7 +263,7 @@ def _diversity_dim(texts, shingle_sets, *, seed) -> DimensionScore:
     score = 100.0 * (0.6 * (1 - self_sim) + 0.4 * min(1, d2 / 0.25))
     findings: List[str] = []
     if d2 < 0.4:
-        findings.append("low bigram diversity — templates may be too repetitive")
+        findings.append("low bigram diversity, templates may be too repetitive")
     if self_sim > 0.3:
         findings.append(f"records are {self_sim * 100:.0f}% similar on average")
     return DimensionScore(
@@ -313,7 +313,7 @@ def _contamination_dim(texts, shingle_sets, against_texts, *, ngram) -> Dimensio
     n = len(texts)
     score = 100.0 * (1 - len(flagged) / n) if n else 100.0
     summary = (f"{len(flagged)}/{n} records overlap the eval set" if flagged
-               else f"clean — 0/{n} overlap the eval set")
+               else f"clean: 0/{n} overlap the eval set")
     findings = [f"#{i}: {why}: {snip!r}" for i, why, snip in flagged[:4]]
     return DimensionScore(
         "contamination", "Contamination", round(score, 1), summary, findings,

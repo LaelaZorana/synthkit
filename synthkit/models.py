@@ -14,7 +14,7 @@ class SynthkitError(Exception):
     """
 
 
-# Letter grades, best to worst — same scale as the rest of the portfolio.
+# Letter grades, best to worst, same scale as the rest of the portfolio.
 GRADE_BANDS = [
     (97, "A+"), (93, "A"), (85, "B"), (75, "C"), (65, "D"), (0, "F"),
 ]

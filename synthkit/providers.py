@@ -28,7 +28,7 @@ def _post_json(url: str, payload: dict, timeout: int = 120) -> dict:
         detail = exc.read().decode("utf-8", "ignore")[:200]
         hint = ""
         if exc.code == 404 and "model" in detail.lower():
-            hint = " — pull it first with `ollama pull <model>`"
+            hint = ". Pull it first with `ollama pull <model>`"
         raise SynthkitError(f"Ollama returned HTTP {exc.code} from {url}{hint}\n  {detail}")
     except urllib.error.URLError as exc:
         raise SynthkitError(
@@ -69,7 +69,7 @@ class AnthropicProvider(Provider):
         try:
             import anthropic
         except ImportError as exc:
-            raise SynthkitError("--provider anthropic needs the anthropic SDK — "
+            raise SynthkitError("--provider anthropic needs the anthropic SDK. "
                              "`pip install anthropic`.") from exc
         self.model = model
         self._client = anthropic.Anthropic()
@@ -90,7 +90,7 @@ class OpenAIProvider(Provider):
         try:
             import openai
         except ImportError as exc:
-            raise SynthkitError("--provider openai needs the openai SDK — "
+            raise SynthkitError("--provider openai needs the openai SDK. "
                              "`pip install openai`.") from exc
         self.model = model
         self._client = openai.OpenAI()
@@ -150,7 +150,7 @@ class OpenAIEmbedder(Embedder):
         try:
             import openai
         except ImportError as exc:
-            raise SynthkitError("--embed-provider openai needs the openai SDK — "
+            raise SynthkitError("--embed-provider openai needs the openai SDK. "
                              "`pip install openai`.") from exc
         self.model = model
         self._client = openai.OpenAI()

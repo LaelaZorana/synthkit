@@ -72,7 +72,7 @@ def test_validity_flags_empty_and_short():
 
 
 class _FakeEmbedder:
-    """Deterministic bag-of-words vectors — identical text ⇒ identical vector."""
+    """Deterministic bag-of-words vectors, identical text ⇒ identical vector."""
 
     def embed(self, texts):
         vocab = sorted({w for t in texts for w in t.lower().split()})

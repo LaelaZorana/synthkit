@@ -10,7 +10,7 @@ pinned: false
 license: mit
 ---
 
-# synthkit — synthetic data, graded
+# synthkit: synthetic data, graded
 
 Generate synthetic LLM data and **grade it** on validity, uniqueness, diversity,
 and contamination, with an A+→F headline. This Space is a live, offline demo
