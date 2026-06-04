@@ -102,30 +102,54 @@ class _UnionFind:
             self.parent[rx] = ry
 
 
-def _duplicate_map(shingle_sets: List[Set[str]], *, num_perm: int = 64,
-                   bands: int = 16, threshold: float = 0.8,
+class _LSHIndex:
+    """MinHash + LSH index over a list of shingle sets.
+
+    Build once, then `candidates(shingles)` returns the (small) set of indices that
+    share at least one band with the query — turning all-pairs similarity work into
+    near-linear candidate lookups. Used for both near-dup detection and the
+    contamination check so neither is quadratic in the dataset size.
+    """
+
+    def __init__(self, shingle_sets: List[Set[str]], *, num_perm: int = 64,
+                 bands: int = 16, seed: int = 17) -> None:
+        self._hasher = _MinHasher(num_perm, seed)
+        self._bands = bands
+        self._rows = num_perm // bands
+        self._buckets: Dict[Tuple[int, Tuple[int, ...]], List[int]] = {}
+        for idx, shingset in enumerate(shingle_sets):
+            sig = self._hasher.sign(shingset)
+            if sig is None:
+                continue
+            for band in range(bands):
+                key = (band, sig[band * self._rows:(band + 1) * self._rows])
+                self._buckets.setdefault(key, []).append(idx)
+
+    def candidates(self, shingset: Set[str]) -> Set[int]:
+        sig = self._hasher.sign(shingset)
+        if sig is None:
+            return set()
+        out: Set[int] = set()
+        for band in range(self._bands):
+            key = (band, sig[band * self._rows:(band + 1) * self._rows])
+            out.update(self._buckets.get(key, ()))
+        return out
+
+
+def _duplicate_map(shingle_sets: List[Set[str]], *, threshold: float = 0.8,
                    seed: int = 17) -> Dict[int, int]:
     """Return {pos: root_pos} for every entry that near-duplicates an earlier one."""
-    rows = num_perm // bands
-    hasher = _MinHasher(num_perm, seed)
-    sigs = [hasher.sign(s) for s in shingle_sets]
-    buckets: Dict[Tuple[int, Tuple[int, ...]], List[int]] = {}
-    candidates: Set[Tuple[int, int]] = set()
-    for idx, sig in enumerate(sigs):
-        if sig is None:
-            continue
-        for band in range(bands):
-            key = (band, sig[band * rows:(band + 1) * rows])
-            bucket = buckets.setdefault(key, [])
-            for other in bucket:
-                candidates.add((other, idx) if other < idx else (idx, other))
-            bucket.append(idx)
-
+    index = _LSHIndex(shingle_sets, seed=seed)
     uf = _UnionFind(len(shingle_sets))
-    for i, j in candidates:
-        a, b = shingle_sets[i], shingle_sets[j]
-        if a and b and len(a & b) / len(a | b) >= threshold:
-            uf.union(i, j)
+    for i, shingset in enumerate(shingle_sets):
+        if not shingset:
+            continue
+        for j in index.candidates(shingset):
+            if j >= i:
+                continue
+            other = shingle_sets[j]
+            if other and len(shingset & other) / len(shingset | other) >= threshold:
+                uf.union(i, j)
 
     dup_of: Dict[int, int] = {}
     for idx in range(len(shingle_sets)):
@@ -262,15 +286,18 @@ def _contamination_dim(texts, shingle_sets, against_texts, *, ngram) -> Dimensio
         ts = tokens(t)
         eval_ngrams |= ngram_set(ts, ngram)
         eval_shingles.append(shingles(ts, 5))
+    eval_index = _LSHIndex(eval_shingles, seed=17)     # avoid the O(records×eval) scan
     flagged: List[Tuple[int, str, str]] = []
     for idx, text in enumerate(texts):
         ts = tokens(text)
         sh = shingle_sets[idx]
         hit, reason = False, ""
-        for es in eval_shingles:                       # near-duplicate of an eval item
-            if sh and es and len(sh & es) / len(sh | es) >= 0.7:
-                hit, reason = True, "near-duplicate of an eval item"
-                break
+        if sh:                                         # near-duplicate of an eval item
+            for j in eval_index.candidates(sh):
+                es = eval_shingles[j]
+                if es and len(sh & es) / len(sh | es) >= 0.7:
+                    hit, reason = True, "near-duplicate of an eval item"
+                    break
         if not hit:
             # n-gram containment: what fraction of THIS record's n-grams are in the
             # eval set. Robust to shared template boilerplate (only a few n-grams),

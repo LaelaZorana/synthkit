@@ -6,6 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from synthkit.models import SynthkitError
 from synthkit.text.generate import generate, sample_prompts
 from synthkit.text.seeds import DEMO_EVAL, DEMO_INSTRUCTION
 
@@ -61,6 +62,25 @@ def test_semantic_dedup_during_generation():
                     dedup_threshold=0.85, stats=stats)
     assert len(data) == 1, len(data)              # only the first survives
     assert stats["rejected_semantic"] == 4, stats
+
+
+def test_template_injection_is_inert():
+    # A pasted template trying CWE-134 format-string tricks must stay LITERAL.
+    spec = {"kind": "eval",
+            "templates": ["leak {b.__class__.__mro__} pad {b:>999999}"],
+            "slots": {"b": ["x"]}, "response": {"mode": "none"},
+            "constraints": {"min_words": 0}}
+    p = generate(spec, 1, seed=1)[0]["prompt"]
+    assert "<class" not in p and len(p) < 200      # no attribute walk, no format-spec DoS
+
+
+def test_missing_slot_raises_synthkit_error():
+    try:
+        generate({"kind": "eval", "templates": ["{nope}"],
+                  "slots": {"b": ["x"]}, "response": {"mode": "none"}}, 1)
+        raise AssertionError("should have raised")
+    except SynthkitError:
+        pass
 
 
 def _run():

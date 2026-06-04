@@ -6,6 +6,8 @@ import json
 import os
 from typing import Any, Dict, List
 
+from synthkit.models import SynthkitError
+
 
 def _ext(path: str) -> str:
     return os.path.splitext(path)[1].lower()
@@ -29,7 +31,7 @@ def read_records(path: str) -> List[Dict[str, Any]]:
         if ext in (".csv", ".tsv"):
             delim = "\t" if ext == ".tsv" else ","
             return list(csv.DictReader(fh, delimiter=delim))
-    raise SystemExit(f"error: unsupported input format {ext or path!r}")
+    raise SynthkitError(f"unsupported input format {ext or path!r}")
 
 
 def write_jsonl(path: str, records: List[Dict[str, Any]]) -> None:
@@ -53,8 +55,8 @@ def load_spec(path: str) -> Dict[str, Any]:
             try:
                 import yaml  # optional dependency
             except ImportError as exc:  # pragma: no cover
-                raise SystemExit(
-                    "error: reading YAML seeds needs pyyaml — "
+                raise SynthkitError(
+                    "reading YAML seeds needs pyyaml — "
                     "`pip install pyyaml`, or use a .json seed."
                 ) from exc
             return yaml.safe_load(fh)

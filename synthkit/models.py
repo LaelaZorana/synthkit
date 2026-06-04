@@ -4,6 +4,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+
+class SynthkitError(Exception):
+    """User-facing error (bad seed spec, unreadable input, provider failure).
+
+    Library code raises this instead of calling sys.exit/SystemExit, so that
+    callers embedding the library (the Gradio app, the tests) can catch it.
+    The CLI converts it into a clean non-zero exit.
+    """
+
+
 # Letter grades, best to worst — same scale as the rest of the portfolio.
 GRADE_BANDS = [
     (97, "A+"), (93, "A"), (85, "B"), (75, "C"), (65, "D"), (0, "F"),

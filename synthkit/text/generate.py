@@ -8,21 +8,43 @@ Two phases:
 
 Optional: pass a `dedup_embedder` to dedup *by meaning as you generate* — each
 candidate is embedded and rejected if it's within `dedup_threshold` cosine of an
-already-accepted record. The output is then clean of semantic duplicates by
-construction (this path is sequential, since acceptance depends on prior picks).
+already-accepted record.
+
+Templates are rendered with a safe `{slot}`-only substitution (NOT str.format):
+attribute/index access and format specs are treated as literal text, so an
+untrusted template can't reach object internals or trigger a format-spec blow-up.
 """
 from __future__ import annotations
 
 import random
+import re
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from synthkit.grading import record_text
+from synthkit.models import SynthkitError
 from synthkit.providers import Embedder, Provider
 from synthkit.util import max_cosine, pmap, unit
 
+_PLACEHOLDER = re.compile(r"\{(\w+)\}")
+_MAX_RECORD_CHARS = 100_000  # guards against a pathological slot value
+
+
+def render(template: str, fill: Dict[str, str]) -> str:
+    """Substitute only bare ``{slot}`` placeholders; everything else stays literal."""
+    def repl(match: "re.Match[str]") -> str:
+        key = match.group(1)
+        if key not in fill:
+            raise SynthkitError(f"template slot '{key}' is missing from 'slots'")
+        return str(fill[key])
+
+    out = _PLACEHOLDER.sub(repl, template)
+    if len(out) > _MAX_RECORD_CHARS:
+        raise SynthkitError(f"rendered record exceeds {_MAX_RECORD_CHARS} characters")
+    return out
+
 
 def _rule_response(resp_cfg: Dict[str, Any], fill: Dict[str, str]) -> str:
-    return str(resp_cfg.get("template", "")).format(**fill)
+    return render(str(resp_cfg.get("template", "")), fill)
 
 
 def _shape_record(kind: str, prompt: str, response: str,
@@ -48,7 +70,7 @@ def _response_for(kind: str, mode: str, resp_cfg: Dict[str, Any], fill: Dict[str
         return _rule_response(resp_cfg, fill)
     if mode == "provider":
         return provider.generate(prompt, system)  # type: ignore[union-attr]
-    raise SystemExit(f"error: unknown response.mode {mode!r}")
+    raise SynthkitError(f"unknown response.mode {mode!r}")
 
 
 def sample_prompts(spec: Dict[str, Any], n: int, *, seed: int = 17,
@@ -58,7 +80,7 @@ def sample_prompts(spec: Dict[str, Any], n: int, *, seed: int = 17,
     """Phase 1 — return up to n (prompt, slot-fill) pairs."""
     templates = spec.get("templates") or []
     if not templates:
-        raise SystemExit("error: seed spec has no 'templates'")
+        raise SynthkitError("seed spec has no 'templates'")
     slots: Dict[str, List[str]] = spec.get("slots") or {}
     min_words = int((spec.get("constraints") or {}).get("min_words", 0))
 
@@ -71,10 +93,7 @@ def sample_prompts(spec: Dict[str, Any], n: int, *, seed: int = 17,
         attempts += 1
         template = rng.choice(templates)
         fill = {k: rng.choice(v) for k, v in slots.items()}
-        try:
-            prompt = template.format(**fill)
-        except KeyError as exc:
-            raise SystemExit(f"error: template slot {exc} is missing from 'slots'")
+        prompt = render(template, fill)
         if len(prompt.split()) < min_words:
             continue
         if dedup:
@@ -134,8 +153,8 @@ def generate(spec: Dict[str, Any], n: int, *, provider: Optional[Provider] = Non
     mode = resp_cfg.get("mode", "none")
 
     if mode == "provider" and provider is None:
-        raise SystemExit("error: response.mode is 'provider' but no provider was selected "
-                         "(pass --provider ollama|anthropic|openai)")
+        raise SynthkitError("response.mode is 'provider' but no provider was selected "
+                            "(pass --provider ollama|anthropic|openai)")
 
     if dedup_embedder is not None:
         return _generate_dedup(spec, n, provider, seed, dedup, progress,
@@ -150,7 +169,7 @@ def generate(spec: Dict[str, Any], n: int, *, provider: Optional[Provider] = Non
             responses = pmap(lambda pf: provider.generate(pf[0], system),
                              prompts, concurrency=concurrency, progress=progress)
         else:
-            raise SystemExit(f"error: unknown response.mode {mode!r}")
+            raise SynthkitError(f"unknown response.mode {mode!r}")
 
     return [_shape_record(kind, prompt, resp, system, domain)
             for (prompt, _fill), resp in zip(prompts, responses)]

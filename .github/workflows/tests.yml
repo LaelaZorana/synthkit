@@ -19,12 +19,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      # The core is zero-dependency, so the tests run on the standard library alone.
+      # The core is zero-dependency; pytest + ruff come from the [dev] extra.
+      - name: Install (with dev deps)
+        run: python -m pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check .
       - name: Run test suite
-        run: |
-          python tests/test_grading.py
-          python tests/test_generate.py
-          python tests/test_formats.py
+        run: pytest -q
       - name: Smoke-test the CLI
         run: |
           python main.py --version

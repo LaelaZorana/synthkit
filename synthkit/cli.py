@@ -9,6 +9,7 @@ from synthkit import __version__
 from synthkit.formats import FORMATS, to_format
 from synthkit.grading import grade_dataset
 from synthkit.io_utils import load_spec, read_records, write_jsonl, write_text
+from synthkit.models import SynthkitError
 from synthkit.providers import get_embedder, get_provider
 from synthkit.report import print_report, to_html, to_json
 from synthkit.text.generate import generate
@@ -34,8 +35,16 @@ def _maybe_embedder(args):
 def _run_demo(args) -> int:
     print("synthkit demo — generating a coding eval set, then grading it…",
           file=sys.stderr)
-    data = generate(DEMO_EVAL, 200, seed=17)
-    bench = generate(DEMO_EVAL, 40, seed=99)          # stand-in held-out benchmark
+    # Train and eval are drawn from DISJOINT tasks (a genuine held-out split), then a
+    # known handful of eval records are deliberately leaked into train — so the
+    # contamination axis reflects real leakage, not one generator overlapping itself.
+    tasks = DEMO_EVAL["slots"]["task"]
+    train_spec = {**DEMO_EVAL, "slots": {**DEMO_EVAL["slots"], "task": tasks[:7]}}
+    eval_spec = {**DEMO_EVAL, "slots": {**DEMO_EVAL["slots"], "task": tasks[7:]}}
+    data = generate(train_spec, 195, seed=17)
+    bench = generate(eval_spec, 40, seed=99)
+    leaks = [dict(r) for r in bench[:5]]              # 5 genuine, verbatim leaks
+    data = data + leaks
     write_jsonl("synthkit_demo.jsonl", data)
     write_jsonl("synthkit_demo.benchmark.jsonl", bench)
 
@@ -43,8 +52,10 @@ def _run_demo(args) -> int:
     print_report(report, dataset="synthkit_demo.jsonl", use_color=not args.no_color)
     write_text("synthkit_demo.report.json", to_json(report, "synthkit_demo.jsonl"))
     write_text("synthkit_demo.report.html", to_html(report, "synthkit_demo.jsonl"))
-    print(f"  wrote synthkit_demo.jsonl ({len(data)} records), "
-          f"benchmark ({len(bench)}), .report.json, .report.html")
+    print(f"  wrote synthkit_demo.jsonl ({len(data)} records) + benchmark ({len(bench)}) "
+          "+ .report.json + .report.html", file=sys.stderr)
+    print("  note: eval uses HELD-OUT tasks; 5 records were deliberately leaked into "
+          "train, so contamination flags exactly those real leaks.", file=sys.stderr)
     return 0
 
 
@@ -239,7 +250,10 @@ def main(argv: List[str] = None) -> None:
     # bare `synthkit text` with no subcommand
     if args.cmd == "text" and not getattr(args, "func", None):
         parser.parse_args(["text", "--help"])
-    sys.exit(args.func(args))
+    try:
+        sys.exit(args.func(args))
+    except SynthkitError as exc:
+        sys.exit(f"error: {exc}")
 
 
 if __name__ == "__main__":

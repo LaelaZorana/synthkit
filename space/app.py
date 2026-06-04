@@ -21,14 +21,20 @@ from synthkit.text.seeds import BUILTIN_SEEDS
 GH = "https://github.com/LaelaZorana/synthkit"
 
 
+_MAX_INPUT_BYTES = 4_000_000   # ~4 MB ceiling on pasted/uploaded data (public demo)
+_MAX_RECORDS = 5000            # cap rows graded per request
+
+
 def _records_from(text: str, file) -> list:
     raw = ""
     if file is not None:
         path = file if isinstance(file, str) else getattr(file, "name", None)
         with open(path, "r", encoding="utf-8") as fh:
-            raw = fh.read()
+            raw = fh.read(_MAX_INPUT_BYTES + 1)
     elif text and text.strip():
         raw = text
+    if len(raw) > _MAX_INPUT_BYTES:
+        raise ValueError(f"input too large (limit {_MAX_INPUT_BYTES // 1_000_000} MB)")
     raw = raw.strip()
     if not raw:
         raise ValueError("Paste some JSONL/JSON or upload a file first.")
@@ -38,6 +44,8 @@ def _records_from(text: str, file) -> list:
         recs = [json.loads(line) for line in raw.splitlines() if line.strip()]
     if not isinstance(recs, list) or not recs:
         raise ValueError("No records found.")
+    if len(recs) > _MAX_RECORDS:
+        raise ValueError(f"too many records ({len(recs)}); this demo caps at {_MAX_RECORDS}")
     return recs
 
 
@@ -56,7 +64,7 @@ def grade_ui(dataset_text, dataset_file, eval_text):
         records = _records_from(dataset_text, dataset_file)
         against = None
         if eval_text and eval_text.strip():
-            against = [json.loads(l) for l in eval_text.splitlines() if l.strip()]
+            against = [json.loads(ln) for ln in eval_text.splitlines() if ln.strip()][:_MAX_RECORDS]
         report = grade_dataset(records, against=against)
         return _iframe(to_html(report, "uploaded dataset")), to_json(report, "uploaded dataset")
     except Exception as exc:  # noqa: BLE001 - surface any parse/grade error to the UI
@@ -66,7 +74,7 @@ def grade_ui(dataset_text, dataset_file, eval_text):
 def generate_ui(seed_choice, seed_text, n):
     try:
         spec = json.loads(seed_text) if seed_text and seed_text.strip() else BUILTIN_SEEDS[seed_choice]
-        data = generate(spec, int(n), seed=17)
+        data = generate(spec, max(1, min(int(n), 300)), seed=17)   # hard-cap N on the public demo
         report = grade_dataset(data)
         jsonl = "\n".join(json.dumps(r, ensure_ascii=False) for r in data)
         return _iframe(to_html(report, "generated dataset")), jsonl
@@ -122,4 +130,4 @@ with gr.Blocks(title="synthkit", theme=gr.themes.Soft(), css="footer{visibility:
     gr.Markdown(f"[⭐ Source on GitHub]({GH}) · MIT-licensed · zero-dependency core")
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.queue(default_concurrency_limit=2, max_size=24).launch()

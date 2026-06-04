@@ -20,7 +20,7 @@ $ synthkit text gen --demo
 
   ┌─ synthkit · data quality ──────────────────────────
   │
-  │  Quality grade   B    (84.3/100)
+  │  Quality grade   B    (89.8/100)
   │  Records         200
   │  Dataset         synthkit_demo.jsonl
   │
@@ -29,25 +29,33 @@ $ synthkit text gen --demo
   DIMENSIONS
 
   ● Validity        100  █████████████████████  200/200 records well-formed
-  ● Uniqueness       98  ████████████████████░  197/200 unique (0 exact, 3 near)
-  ● Diversity        72  ███████████████░░░░░░  distinct-2 0.66 · self-sim 0.18
-  ● Contamination    96  ████████████████████░  8/200 records overlap the eval set
+  ● Uniqueness       92  ███████████████████░░  185/200 unique  (0 exact, 15 near)
+  ● Diversity        70  ███████████████░░░░░░  distinct-2 0.07 · distinct-1 0.03 · self-sim 0.03
+  ● Contamination    98  ████████████████████░  5/200 records overlap the eval set
 ```
+
+The demo draws its eval set from **held-out tasks** and deliberately leaks 5 records into
+training, so contamination flags exactly those 5. (The low `distinct-2` is expected —
+corpus-level distinct-n shrinks with dataset size — which is why the diversity score leans
+on pairwise self-similarity instead.) These numbers reproduce from a clean checkout.
 
 Zero dependencies for the core — it runs on the Python standard library alone.
 
 ---
 
-## Three products, one core
+## One core, three products
 
-synthkit is built as a toolkit. The generator differs per data type; the
-**grading engine, providers, and report writer are shared**.
+**Product A (`text`) is the complete, shipping tool** described in this README. It's
+built on a core — the grading engine, providers, and report writer — that is generic
+over "a list of records," so B and C are a deliberate, near-term extension of the same
+seam rather than separate rewrites. They are **roadmap, not yet implemented** (the CLI
+subcommands say so).
 
 | Module | Makes | Status |
 |---|---|---|
 | **`text`** (A) | LLM instruction & evaluation datasets | **live** |
-| **`tabular`** (B) | schema-aware fixtures with referential integrity | roadmap |
-| **`privacy`** (C) | privacy-safe synthetic twins of real datasets | roadmap |
+| **`tabular`** (B) | schema-aware fixtures with referential integrity | roadmap (stub) |
+| **`privacy`** (C) | privacy-safe synthetic twins of real datasets | roadmap (stub) |
 
 ---
 
@@ -145,6 +153,25 @@ Every run prints the terminal report and can also write:
   similar twin; adds distribution-fidelity + membership-inference-distance axes.
 
 Both reuse the Product A core unchanged.
+
+## Limitations & design notes
+
+Honesty about what the grades do and don't mean:
+
+- **The letter grade is a convenience, not ground truth.** It's a weighted blend of
+  heuristics; the per-axis raw numbers in the JSON report are what you should act on.
+  The weights and thresholds are documented inline in `grading.py` and are deliberately
+  conservative, not tuned against a benchmark.
+- **`distinct-n` is corpus-size-dependent** (it shrinks as a set grows), so diversity
+  leans primarily on pairwise self-similarity, with distinct-2 as a secondary signal.
+- **Lexical vs. semantic.** Uniqueness/contamination are lexical (MinHash/LSH +
+  n-gram containment) and miss paraphrases by design; that's exactly what the opt-in
+  `--semantic` axis (embeddings) is for.
+- **Determinism.** Generation and grading are deterministic for a fixed `--seed`;
+  provider-backed responses are not (the model is).
+- **Templates are rendered with a safe `{slot}`-only substitution**, not `str.format`,
+  so an untrusted seed spec can't reach object internals. The hosted demo additionally
+  caps input size, record count, and concurrency.
 
 ## License
 

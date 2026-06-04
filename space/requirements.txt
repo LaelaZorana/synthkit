@@ -1,1 +1,1 @@
-git+https://github.com/LaelaZorana/synthkit.git
+synthkit @ git+https://github.com/LaelaZorana/synthkit.git@v0.4.0

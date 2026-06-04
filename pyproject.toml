@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "synthkit"
-version = "0.3.0"
+version = "0.4.0"
 description = "Generate synthetic data and grade it for quality — LLM instruction & eval datasets, with validity / uniqueness / diversity / contamination scoring."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -17,9 +17,18 @@ yaml = ["pyyaml>=6"]
 anthropic = ["anthropic>=0.39"]
 openai = ["openai>=1.40"]
 fast = ["numpy>=1.21"]   # speeds up the optional semantic axis on large datasets
+dev = ["pytest>=7", "ruff>=0.5"]
 
 [project.scripts]
 synthkit = "synthkit.cli:main"
 
 [tool.setuptools]
 packages = ["synthkit", "synthkit.text", "synthkit.tabular", "synthkit.privacy"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]  # long lines are tolerated in the embedded HTML report template

@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from synthkit.models import SynthkitError
+
 FORMATS = ("raw", "alpaca", "sharegpt", "openai")
 
 
@@ -26,7 +28,7 @@ def _parts(rec: Dict[str, Any]):
 
 def to_format(records: List[Dict[str, Any]], fmt: str) -> List[Dict[str, Any]]:
     if fmt not in FORMATS:
-        raise SystemExit(f"error: unknown --format {fmt!r} (choose from {', '.join(FORMATS)})")
+        raise SynthkitError(f"unknown --format {fmt!r} (choose from {', '.join(FORMATS)})")
     if fmt == "raw":
         return records
 

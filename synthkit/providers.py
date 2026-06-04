@@ -13,6 +13,7 @@ import urllib.error
 import urllib.request
 from typing import List, Optional
 
+from synthkit.models import SynthkitError
 
 # ---- HTTP helper with friendly Ollama errors ---------------------------------
 
@@ -28,10 +29,10 @@ def _post_json(url: str, payload: dict, timeout: int = 120) -> dict:
         hint = ""
         if exc.code == 404 and "model" in detail.lower():
             hint = " — pull it first with `ollama pull <model>`"
-        raise SystemExit(f"error: Ollama returned HTTP {exc.code} from {url}{hint}\n  {detail}")
+        raise SynthkitError(f"Ollama returned HTTP {exc.code} from {url}{hint}\n  {detail}")
     except urllib.error.URLError as exc:
-        raise SystemExit(
-            f"error: can't reach Ollama at {url} ({exc.reason}). "
+        raise SynthkitError(
+            f"can't reach Ollama at {url} ({exc.reason}). "
             "Is the daemon running? Start it with `ollama serve`.")
 
 
@@ -68,7 +69,7 @@ class AnthropicProvider(Provider):
         try:
             import anthropic
         except ImportError as exc:
-            raise SystemExit("error: --provider anthropic needs the anthropic SDK — "
+            raise SynthkitError("--provider anthropic needs the anthropic SDK — "
                              "`pip install anthropic`.") from exc
         self.model = model
         self._client = anthropic.Anthropic()
@@ -89,7 +90,7 @@ class OpenAIProvider(Provider):
         try:
             import openai
         except ImportError as exc:
-            raise SystemExit("error: --provider openai needs the openai SDK — "
+            raise SynthkitError("--provider openai needs the openai SDK — "
                              "`pip install openai`.") from exc
         self.model = model
         self._client = openai.OpenAI()
@@ -111,7 +112,7 @@ def get_provider(name: Optional[str], model: str = "") -> Optional[Provider]:
         return AnthropicProvider(model or "claude-haiku-4-5-20251001")
     if name == "openai":
         return OpenAIProvider(model or "gpt-4o-mini")
-    raise SystemExit(f"error: unknown provider {name!r}")
+    raise SynthkitError(f"unknown provider {name!r}")
 
 
 # ---- embedders (for the optional semantic axis) ------------------------------
@@ -137,7 +138,7 @@ class OllamaEmbedder(Embedder):
                               {"model": self.model, "prompt": t})
             vec = data.get("embedding")
             if not vec:
-                raise SystemExit(f"error: Ollama embedder returned no vector for model {self.model!r}")
+                raise SynthkitError(f"Ollama embedder returned no vector for model {self.model!r}")
             out.append(vec)
         return out
 
@@ -149,7 +150,7 @@ class OpenAIEmbedder(Embedder):
         try:
             import openai
         except ImportError as exc:
-            raise SystemExit("error: --embed-provider openai needs the openai SDK — "
+            raise SynthkitError("--embed-provider openai needs the openai SDK — "
                              "`pip install openai`.") from exc
         self.model = model
         self._client = openai.OpenAI()
@@ -166,4 +167,4 @@ def get_embedder(name: Optional[str], model: str = "") -> Optional[Embedder]:
         return OllamaEmbedder(model or "nomic-embed-text")
     if name == "openai":
         return OpenAIEmbedder(model or "text-embedding-3-small")
-    raise SystemExit(f"error: unknown embed provider {name!r}")
+    raise SynthkitError(f"unknown embed provider {name!r}")
